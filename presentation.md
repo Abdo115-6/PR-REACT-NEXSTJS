@@ -296,5 +296,19 @@ platform_settings (id, fee_percentage, updated_at)
 
 ---
 
+## Branches GitHub
+
+| Branche | Étudiant | Contenu |
+|---------|----------|---------|
+| `main` | Équipe | Code de base stable |
+| `abdo` | **Abdo** | Auth (Google, GitHub), backend Supabase, système de dons, dashboard analytics, notifications temps réel |
+| `soukaina` | **Soukaina** | Page d'accueil, détail campagne, navbar, design UI/UX, mode sombre/clair |
+| `salma` | **Salma** | Paramètres plateforme, gestion campagnes, flux d'activité, documentation, données de démonstration |
+
+Chaque étudiant travaille sur sa branche et peut créer une **Pull Request** vers `main` pour fusionner son code.
+
+---
+
 **Projet réalisé par :** Abdo · Soukaina · Salma  
-**Technologies :** Next.js 16 · React 19 · TypeScript · Tailwind CSS · Supabase · Recharts · shadcn/ui
+**Technologies :** Next.js 16 · React 19 · TypeScript · Tailwind CSS · Supabase · Recharts · shadcn/ui  
+**Dépôt :** [github.com/Abdo115-6/Donation-platform](https://github.com/Abdo115-6/Donation-platform)
