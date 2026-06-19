@@ -13,15 +13,15 @@ interface DonorLeaderboardProps {
 }
 
 const rankIcons = [
-  <Trophy key="1" className="w-4 h-4 text-yellow-500" />,
-  <Medal key="2" className="w-4 h-4 text-gray-400" />,
-  <Award key="3" className="w-4 h-4 text-amber-600" />,
+  <Trophy key="1" className="h-4 w-4 text-amber-600 dark:text-amber-300" />,
+  <Medal key="2" className="h-4 w-4 text-slate-500 dark:text-slate-300" />,
+  <Award key="3" className="h-4 w-4 text-orange-600 dark:text-orange-300" />,
 ]
 
 const rankColors = [
-  'bg-yellow-50 dark:bg-yellow-950/30 border-yellow-200 dark:border-yellow-800',
-  'bg-gray-50 dark:bg-gray-900/30 border-gray-200 dark:border-gray-800',
-  'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800',
+  'border-amber-200 bg-amber-50/70 dark:border-amber-900 dark:bg-amber-950/20',
+  'border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/30',
+  'border-orange-200 bg-orange-50/60 dark:border-orange-900 dark:bg-orange-950/20',
 ]
 
 export function DonorLeaderboard({ donors }: DonorLeaderboardProps) {
@@ -30,39 +30,39 @@ export function DonorLeaderboard({ donors }: DonorLeaderboardProps) {
   const topDonors = donors.slice(0, 10)
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Trophy className="w-5 h-5 text-yellow-500" />
+    <Card className="border-border/70 shadow-sm">
+      <CardHeader className="border-b bg-muted/30">
+        <CardTitle className="flex items-center gap-2 text-base font-semibold">
+          <Trophy className="h-4 w-4 text-amber-600 dark:text-amber-300" />
           Top Donors
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-4">
         <div className="space-y-2">
           {topDonors.map((donor, index) => (
             <div
               key={index}
-              className={`flex items-center justify-between p-2 rounded-lg border ${
-                index < 3 ? rankColors[index] : 'border-transparent'
+              className={`flex items-center justify-between gap-3 rounded-lg border p-2.5 ${
+                index < 3 ? rankColors[index] : 'border-transparent bg-muted/20'
               }`}
             >
-              <div className="flex items-center gap-3">
-                <span className="w-6 text-center">
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-background text-center">
                   {index < 3 ? (
                     rankIcons[index]
                   ) : (
-                    <span className="text-sm text-muted-foreground">#{index + 1}</span>
+                    <span className="text-xs text-muted-foreground">#{index + 1}</span>
                   )}
                 </span>
-                <span className="font-medium text-sm">
+                <span className="truncate text-sm font-medium">
                   {donor.anonymous ? 'Anonymous' : donor.donor_name || 'Anonymous'}
                 </span>
               </div>
-              <div className="text-right">
-                <span className="font-semibold text-sm">
+              <div className="shrink-0 text-right">
+                <span className="block text-sm font-semibold">
                   MAD {donor.total_amount.toLocaleString()}
                 </span>
-                <span className="text-xs text-muted-foreground ml-2">
+                <span className="text-[11px] text-muted-foreground">
                   {donor.donation_count} donation{donor.donation_count > 1 ? 's' : ''}
                 </span>
               </div>

@@ -3,7 +3,6 @@
 import { useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/hooks/use-toast'
-import { Heart } from 'lucide-react'
 
 export function RealtimeDonations() {
   const supabase = createClient()
@@ -23,10 +22,10 @@ export function RealtimeDonations() {
             : donation.donor_name || 'A donor'
 
           toast({
-            title: `${name} donated MAD ${amount.toLocaleString()}!`,
+            title: `New donation: MAD ${amount.toLocaleString()}`,
             description: donation.message
               ? `"${donation.message.slice(0, 80)}${donation.message.length > 80 ? '...' : ''}"`
-              : 'Thank you for your generosity!',
+              : `${name} supported a campaign. Thank you for your generosity!`,
             duration: 6000,
           })
         }
