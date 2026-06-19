@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { isSupabaseConfigured } from '@/lib/supabase/config'
 import Navbar from '@/components/navbar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -15,7 +16,7 @@ import { DollarSign, Percent, ShieldCheck } from 'lucide-react'
 const DEFAULT_FEE_PERCENTAGE = 5
 
 export default function SettingsPage() {
-  const supabase = createClient()
+  const supabaseConfigured = isSupabaseConfigured()
   const { toast } = useToast()
   const router = useRouter()
   const [feePercentage, setFeePercentage] = useState(DEFAULT_FEE_PERCENTAGE)
@@ -24,6 +25,12 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const loadSettings = async () => {
+      if (!supabaseConfigured) {
+        router.push('/auth/login')
+        return
+      }
+
+      const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         router.push('/auth/login')
@@ -41,9 +48,12 @@ export default function SettingsPage() {
       setLoading(false)
     }
     loadSettings()
-  }, [])
+  }, [router, supabaseConfigured])
 
   const handleSave = async () => {
+    if (!supabaseConfigured) return
+
+    const supabase = createClient()
     setSaving(true)
     try {
       const { error } = await supabase
@@ -170,13 +180,19 @@ export default function SettingsPage() {
 }
 
 function RevenueSummary() {
-  const supabase = createClient()
+  const supabaseConfigured = isSupabaseConfigured()
   const [totalFees, setTotalFees] = useState(0)
   const [totalDonations, setTotalDonations] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const loadRevenue = async () => {
+      if (!supabaseConfigured) {
+        setLoading(false)
+        return
+      }
+
+      const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
@@ -202,7 +218,7 @@ function RevenueSummary() {
       setLoading(false)
     }
     loadRevenue()
-  }, [])
+  }, [supabaseConfigured])
 
   if (loading) return <p className="text-muted-foreground">Loading revenue data...</p>
 

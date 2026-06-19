@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { isSupabaseConfigured } from '@/lib/supabase/config'
 import Navbar from '@/components/navbar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -24,6 +25,8 @@ interface Donation {
 }
 
 export default async function DonationsPage() {
+  if (!isSupabaseConfigured()) redirect('/auth/login')
+
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()

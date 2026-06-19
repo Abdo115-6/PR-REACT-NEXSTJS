@@ -1,9 +1,12 @@
 import Navbar from '@/components/navbar'
 import { CampaignForm } from '@/components/campaign-form'
 import { createClient } from '@/lib/supabase/server'
+import { isSupabaseConfigured } from '@/lib/supabase/config'
 import { redirect } from 'next/navigation'
 
 export default async function CreateCampaignPage() {
+  if (!isSupabaseConfigured()) redirect('/auth/login')
+
   const supabase = await createClient()
 
   // Get current user

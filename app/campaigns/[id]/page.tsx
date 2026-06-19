@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { isSupabaseConfigured } from '@/lib/supabase/config'
 import Navbar from '@/components/navbar'
 import { DonationCard } from '@/components/donation-card'
 import { DonorLeaderboard } from '@/components/donor-leaderboard'
@@ -18,6 +19,8 @@ export default async function CampaignDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
+  if (!isSupabaseConfigured()) notFound()
+
   const supabase = await createClient()
 
   const { data: campaign } = await supabase

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { isSupabaseConfigured } from '@/lib/supabase/config'
 import Navbar from '@/components/navbar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -12,6 +13,8 @@ import { RealtimeDonations } from '@/components/realtime-donations'
 import { Plus, BarChart3, Activity } from 'lucide-react'
 
 export default async function DashboardPage() {
+  if (!isSupabaseConfigured()) redirect('/auth/login')
+
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()

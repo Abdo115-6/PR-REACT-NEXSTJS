@@ -1,6 +1,7 @@
 'use client'
 
 import { createClient } from '@/lib/supabase/client'
+import { isSupabaseConfigured } from '@/lib/supabase/config'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
 
@@ -9,10 +10,13 @@ interface OAuthProvidersProps {
 }
 
 export function OAuthProviders({ redirectTo = '/dashboard' }: OAuthProvidersProps) {
-  const supabase = createClient()
+  const supabaseConfigured = isSupabaseConfigured()
   const [loading, setLoading] = useState<string | null>(null)
 
   const handleOAuth = async (provider: 'google' | 'github') => {
+    if (!supabaseConfigured) return
+
+    const supabase = createClient()
     setLoading(provider)
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -44,7 +48,7 @@ export function OAuthProviders({ redirectTo = '/dashboard' }: OAuthProvidersProp
         variant="outline"
         className="w-full gap-2"
         onClick={() => handleOAuth('google')}
-        disabled={loading !== null}
+        disabled={!supabaseConfigured || loading !== null}
       >
         {loading === 'google' ? (
           <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -63,7 +67,7 @@ export function OAuthProviders({ redirectTo = '/dashboard' }: OAuthProvidersProp
         variant="outline"
         className="w-full gap-2"
         onClick={() => handleOAuth('github')}
-        disabled={loading !== null}
+        disabled={!supabaseConfigured || loading !== null}
       >
         {loading === 'github' ? (
           <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />

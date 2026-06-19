@@ -1,6 +1,8 @@
 'use client'
 
 import { createClient } from '@/lib/supabase/client'
+import { isSupabaseConfigured } from '@/lib/supabase/config'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -23,12 +25,22 @@ export default function Page() {
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const supabaseConfigured = isSupabaseConfigured()
+  const configurationMessage =
+    'Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to .env.local, then restart the dev server.'
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
+
+    if (!supabaseConfigured) {
+      setError(configurationMessage)
+      setIsLoading(false)
+      return
+    }
+
+    const supabase = createClient()
 
     if (password !== repeatPassword) {
       setError('Passwords do not match')
@@ -67,6 +79,12 @@ export default function Page() {
             <CardContent>
               <form onSubmit={handleSignUp}>
                 <div className="flex flex-col gap-6">
+                  {!supabaseConfigured && (
+                    <Alert variant="destructive">
+                      <AlertTitle>Supabase is not configured</AlertTitle>
+                      <AlertDescription>{configurationMessage}</AlertDescription>
+                    </Alert>
+                  )}
                   <div className="grid gap-2">
                     <Label htmlFor="email">Email</Label>
                     <Input
@@ -106,7 +124,7 @@ export default function Page() {
                     />
                   </div>
                   {error && <p className="text-sm text-red-500">{error}</p>}
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button type="submit" className="w-full" disabled={!supabaseConfigured || isLoading}>
                     {isLoading ? 'Creating an account...' : 'Sign up'}
                   </Button>
                 </div>

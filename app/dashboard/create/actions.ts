@@ -1,8 +1,13 @@
 "use server"
 
 import { createClient } from '@/lib/supabase/server'
+import { isSupabaseConfigured } from '@/lib/supabase/config'
 
 export async function createCampaign(formData: FormData) {
+  if (!isSupabaseConfigured()) {
+    return { ok: false as const, message: 'Supabase is not configured.' }
+  }
+
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
