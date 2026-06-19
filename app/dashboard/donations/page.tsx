@@ -73,10 +73,10 @@ export default async function DonationsPage() {
   const uniqueDonors = new Set(donationsWithCampaign.filter(d => d.donor_email).map(d => d.donor_email)).size
 
   const stats = [
-    { title: 'Total Donations', value: totalDonations, icon: Heart, color: 'bg-red-100 dark:bg-red-900', textColor: 'text-red-600 dark:text-red-400' },
-    { title: 'Total Raised', value: `MAD ${totalRaised.toLocaleString()}`, icon: TrendingUp, color: 'bg-green-100 dark:bg-green-900', textColor: 'text-green-600 dark:text-green-400' },
-    { title: 'Platform Fees', value: `MAD ${totalFees.toLocaleString()}`, icon: Wallet, color: 'bg-amber-100 dark:bg-amber-900', textColor: 'text-amber-600 dark:text-amber-400' },
-    { title: 'Unique Donors', value: uniqueDonors, icon: Users, color: 'bg-purple-100 dark:bg-purple-900', textColor: 'text-purple-600 dark:text-purple-400' },
+    { title: 'Total Donations', value: totalDonations, icon: Heart, color: 'bg-red-50 dark:bg-red-950/40', textColor: 'text-red-700 dark:text-red-300' },
+    { title: 'Total Raised', value: `MAD ${totalRaised.toLocaleString()}`, icon: TrendingUp, color: 'bg-green-50 dark:bg-green-950/40', textColor: 'text-green-700 dark:text-green-300' },
+    { title: 'Platform Fees', value: `MAD ${totalFees.toLocaleString()}`, icon: Wallet, color: 'bg-amber-50 dark:bg-amber-950/40', textColor: 'text-amber-700 dark:text-amber-300' },
+    { title: 'Unique Donors', value: uniqueDonors, icon: Users, color: 'bg-sky-50 dark:bg-sky-950/40', textColor: 'text-sky-700 dark:text-sky-300' },
   ]
 
   return (
@@ -84,47 +84,49 @@ export default async function DonationsPage() {
       <Navbar />
       <main className="min-h-screen bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold">Donations</h1>
-            <p className="text-muted-foreground mt-2">Track and manage donations for your campaigns</p>
+          <div className="mb-8 rounded-xl border bg-card p-6 shadow-sm">
+            <p className="text-sm font-medium text-red-700 dark:text-red-300">Revenue dashboard</p>
+            <h1 className="mt-2 text-3xl font-bold tracking-tight md:text-4xl">Donations</h1>
+            <p className="mt-2 max-w-2xl text-muted-foreground">Track donor activity, net campaign revenue, and platform fees across your campaigns.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
             {stats.map((stat) => {
               const Icon = stat.icon
               return (
-                <Card key={stat.title}>
-                  <CardHeader className="pb-3">
+                <Card key={stat.title} className="border-border/70 shadow-sm">
+                  <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
-                      <div className={`p-2 rounded-lg ${stat.color}`}>
-                        <Icon className={`w-4 h-4 ${stat.textColor}`} />
+                      <div className={`rounded-full p-2 ${stat.color}`}>
+                        <Icon className={`h-4 w-4 ${stat.textColor}`} />
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{stat.value}</div>
+                    <div className="text-2xl font-bold tracking-tight">{stat.value}</div>
                   </CardContent>
                 </Card>
               )
             })}
           </div>
 
-          <Card>
-            <CardHeader>
+          <Card className="overflow-hidden border-border/70 shadow-sm">
+            <CardHeader className="border-b bg-muted/30">
               <CardTitle>Donation History</CardTitle>
+              <p className="text-sm text-muted-foreground">Review every donation received for your active campaigns.</p>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               {donationsWithCampaign.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">No donations received yet.</p>
+                <p className="text-muted-foreground text-center py-12">No donations received yet.</p>
               ) : (
                 <Table>
                   <TableHeader>
-                    <TableRow>
+                    <TableRow className="bg-muted/20">
                       <TableHead>Campaign</TableHead>
                       <TableHead>Donor</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Fee</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead className="text-right">Fee</TableHead>
                       <TableHead>Message</TableHead>
                       <TableHead>Date</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
@@ -132,7 +134,7 @@ export default async function DonationsPage() {
                   </TableHeader>
                   <TableBody>
                     {donationsWithCampaign.map((donation) => (
-                      <TableRow key={donation.id}>
+                      <TableRow key={donation.id} className="hover:bg-muted/30">
                         <TableCell className="font-medium">{donation.campaign_title}</TableCell>
                         <TableCell>
                           {donation.anonymous ? (
@@ -141,8 +143,8 @@ export default async function DonationsPage() {
                             <span>{donation.donor_name || 'Unknown'}</span>
                           )}
                         </TableCell>
-                        <TableCell className="font-semibold text-green-600">MAD {parseFloat(donation.amount).toLocaleString()}</TableCell>
-                        <TableCell className="text-amber-600 text-sm">
+                        <TableCell className="text-right font-semibold text-green-700 dark:text-green-300">MAD {parseFloat(donation.amount).toLocaleString()}</TableCell>
+                        <TableCell className="text-right text-sm text-amber-700 dark:text-amber-300">
                           MAD {parseFloat(donation.platform_fee || '0').toLocaleString()}
                         </TableCell>
                         <TableCell className="max-w-[200px] truncate text-muted-foreground">

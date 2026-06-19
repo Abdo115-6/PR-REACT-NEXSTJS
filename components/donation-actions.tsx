@@ -62,11 +62,11 @@ export function DonationActions({ donationId, amount }: DonationActionsProps) {
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+        <Button variant="ghost" size="sm" className="text-red-700 hover:bg-red-50 hover:text-red-800 dark:text-red-300 dark:hover:bg-red-950">
           <Trash2 className="w-4 h-4" />
         </Button>
       </AlertDialogTrigger>
-      <AlertDialogContent>
+      <AlertDialogContent className="border-red-100 bg-white dark:border-red-950 dark:bg-red-950">
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Donation</AlertDialogTitle>
           <AlertDialogDescription>
@@ -75,7 +75,7 @@ export function DonationActions({ donationId, amount }: DonationActionsProps) {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleDelete} disabled={deleting}>
+          <AlertDialogAction onClick={handleDelete} disabled={deleting} className="bg-red-600 text-white hover:bg-red-700">
             {deleting ? 'Deleting...' : 'Delete'}
           </AlertDialogAction>
         </AlertDialogFooter>

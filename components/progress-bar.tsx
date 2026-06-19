@@ -7,9 +7,9 @@ export function ProgressBar({ value, className = '' }: ProgressBarProps) {
   const clampedValue = Math.min(Math.max(value, 0), 100)
 
   return (
-    <div className={`w-full h-2 bg-muted rounded-full overflow-hidden ${className}`}>
+    <div className={`w-full h-2 bg-red-100 rounded-full overflow-hidden dark:bg-red-950 ${className}`}>
       <div
-        className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full transition-all duration-300"
+        className="h-full bg-gradient-to-r from-red-600 to-rose-500 rounded-full transition-all duration-300"
         style={{ width: `${clampedValue}%` }}
       />
     </div>

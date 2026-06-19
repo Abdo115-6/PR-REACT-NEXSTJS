@@ -5,7 +5,9 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { Menu, X, Heart } from 'lucide-react'
+import { ThemeToggle } from '@/components/theme-toggle'
+import { DonationBoxLogo } from '@/components/donation-box-logo'
+import { Menu, X } from 'lucide-react'
 
 export default function Navbar() {
   const router = useRouter()
@@ -33,18 +35,20 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-border bg-background">
+    <nav className="sticky top-0 z-50 w-full border-b border-red-100 bg-white/90 backdrop-blur-md dark:border-red-950 dark:bg-red-950/80">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
+          {/* Brand */}
           <Link href="/" className="flex items-center gap-2">
-            <Heart className="w-6 h-6 text-red-500" />
-            <span className="font-bold text-xl">DonationFlow</span>
+            <DonationBoxLogo className="h-8 w-8 text-red-600 dark:text-red-300" />
+            <span className="text-lg font-semibold tracking-tight text-red-700 dark:text-red-50">
+              DonationFlow
+            </span>
           </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
-            <Link href="/" className="hover:text-primary">
+            <Link href="/campaigns" className="hover:text-primary">
               Campaigns
             </Link>
             <Link href="/dashboard" className="hover:text-primary">
@@ -52,6 +56,9 @@ export default function Navbar() {
             </Link>
             <Link href="/dashboard/donations" className="hover:text-primary">
               Donations
+            </Link>
+            <Link href="/dashboard/profile" className="hover:text-primary">
+              Profile
             </Link>
             <Link href="/dashboard/settings" className="hover:text-primary">
               Settings
@@ -75,27 +82,31 @@ export default function Navbar() {
                 </Link>
               </>
             )}
+            <ThemeToggle />
           </div>
 
           {/* Mobile Menu Button */}
-          <button
-            className="md:hidden"
+          <div className="flex items-center gap-2 md:hidden">
+            <ThemeToggle />
+            <button
+            className="rounded-md p-2 text-red-700 hover:bg-red-50 dark:text-red-100 dark:hover:bg-red-900/50"
             onClick={() => setIsOpen(!isOpen)}
             aria-label="Toggle menu"
-          >
-            {isOpen ? (
-              <X className="w-6 h-6" />
-            ) : (
-              <Menu className="w-6 h-6" />
-            )}
-          </button>
+            >
+              {isOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Menu */}
         {isOpen && (
           <div className="md:hidden pb-4 space-y-4">
             <Link
-              href="/"
+              href="/campaigns"
               className="block hover:text-primary"
               onClick={() => setIsOpen(false)}
             >
@@ -114,6 +125,13 @@ export default function Navbar() {
               onClick={() => setIsOpen(false)}
             >
               Donations
+            </Link>
+            <Link
+              href="/dashboard/profile"
+              className="block hover:text-primary"
+              onClick={() => setIsOpen(false)}
+            >
+              Profile
             </Link>
             <Link
               href="/dashboard/settings"

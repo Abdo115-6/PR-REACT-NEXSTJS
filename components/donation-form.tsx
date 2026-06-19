@@ -6,9 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
-import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/hooks/use-toast'
-import { Loader2, Info, UserCheck, AlertCircle } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Info, Loader2, Lock, UserCheck } from 'lucide-react'
 import Link from 'next/link'
 
 const PLATFORM_FEE_PERCENTAGE = 5
@@ -93,7 +92,7 @@ export function DonationForm({ campaignId }: DonationFormProps) {
       }
 
       toast({
-        title: 'Donation Successful! 🎉',
+        title: 'Donation successful',
         description: `Thank you for donating MAD ${donationAmount.toLocaleString()}.`,
       })
 
@@ -119,56 +118,71 @@ export function DonationForm({ campaignId }: DonationFormProps) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Make a Donation</CardTitle>
+    <Card className="overflow-hidden border-border/70 shadow-sm">
+      <CardHeader className="border-b bg-muted/30">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <CardTitle className="text-xl">Make a Donation</CardTitle>
+            <p className="mt-1 text-sm text-muted-foreground">Support this campaign securely in MAD.</p>
+          </div>
+          <div className="rounded-full bg-green-50 p-2 text-green-700 dark:bg-green-950/40 dark:text-green-300">
+            <Lock className="h-4 w-4" />
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5 pt-6">
           {currentUser ? (
-            <div className="flex items-center gap-2 bg-primary/5 rounded-lg px-3 py-2 text-sm">
-              <UserCheck className="w-4 h-4 text-primary" />
+            <div className="flex items-center gap-2 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm dark:border-green-900 dark:bg-green-950/30">
+              <UserCheck className="h-4 w-4 text-green-700 dark:text-green-300" />
               <span className="text-muted-foreground">Donating as</span>
-              <span className="font-medium">{currentUser.email}</span>
+              <span className="min-w-0 truncate font-medium">{currentUser.email}</span>
             </div>
           ) : (
-            <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-950/30 rounded-lg px-3 py-2 text-sm">
-              <AlertCircle className="w-4 h-4 text-amber-500" />
+            <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm dark:border-amber-900 dark:bg-amber-950/30">
+              <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-300" />
               <span className="text-muted-foreground">Not signed in</span>
               <Link href="/auth/login" className="text-primary underline ml-auto">Sign in</Link>
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium mb-2">Amount ($)</label>
+            <label className="mb-2 block text-sm font-medium">Amount</label>
             <Input
               type="number"
               step="0.01"
               min="1"
-              placeholder="Enter amount"
+              placeholder="MAD 0.00"
               value={formData.amount}
               onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
               disabled={loading}
               required
+              className="h-12 text-lg font-semibold"
             />
           </div>
 
           {donationAmount > 0 && (
-            <div className="bg-muted/50 rounded-lg p-3 space-y-1.5 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Donation Amount</span>
-                <span className="font-medium">MAD {donationAmount.toFixed(2)}</span>
+            <div className="rounded-lg border bg-muted/30 p-4 text-sm">
+              <div className="mb-3 flex items-center gap-2 font-medium">
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                Donation summary
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground flex items-center gap-1">
-                  Platform Fee ({PLATFORM_FEE_PERCENTAGE}%)
-                  <Info className="w-3 h-3" />
-                </span>
-                <span className="text-amber-600 dark:text-amber-400">-MAD {platformFee.toFixed(2)}</span>
-              </div>
-              <div className="border-t pt-1.5 flex justify-between font-semibold">
-                <span>Campaign Receives</span>
-                <span className="text-green-600">MAD {campaignReceives.toFixed(2)}</span>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Donation Amount</span>
+                  <span className="font-medium">MAD {donationAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground flex items-center gap-1">
+                    Platform Fee ({PLATFORM_FEE_PERCENTAGE}%)
+                    <Info className="w-3 h-3" />
+                  </span>
+                  <span className="text-amber-600 dark:text-amber-400">-MAD {platformFee.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between border-t pt-2 font-semibold">
+                  <span>Campaign Receives</span>
+                  <span className="text-green-700 dark:text-green-300">MAD {campaignReceives.toFixed(2)}</span>
+                </div>
               </div>
             </div>
           )}
@@ -210,7 +224,7 @@ export function DonationForm({ campaignId }: DonationFormProps) {
             />
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3 rounded-md border bg-background px-3 py-2">
             <input
               type="checkbox"
               id="anonymous"
@@ -219,14 +233,14 @@ export function DonationForm({ campaignId }: DonationFormProps) {
               disabled={loading}
               className="rounded"
             />
-            <label htmlFor="anonymous" className="text-sm font-medium cursor-pointer">
+            <label htmlFor="anonymous" className="cursor-pointer text-sm font-medium">
               Donate anonymously
             </label>
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="h-11 w-full bg-red-600 text-white hover:bg-red-700" disabled={loading}>
             {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            {loading ? 'Processing...' : `Donate MAD ${donationAmount.toFixed(2) || '—'}`}
+            {loading ? 'Processing...' : donationAmount > 0 ? `Donate MAD ${donationAmount.toFixed(2)}` : 'Enter an amount'}
           </Button>
         </form>
       </CardContent>
