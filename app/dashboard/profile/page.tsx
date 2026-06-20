@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { CalendarDays, Heart, Settings, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
+import { isAdmin } from '@/lib/auth'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -18,6 +19,7 @@ export default async function ProfilePage() {
 
   if (!user) redirect('/auth/login')
 
+  const admin = isAdmin(user)
   const [{ data: profile }, { data: campaigns }] = await Promise.all([
     supabase
       .from('profiles')
@@ -27,7 +29,7 @@ export default async function ProfilePage() {
     supabase
       .from('campaigns')
       .select('id, title, goal_amount, current_amount, created_at')
-      .eq('user_id', user.id)
+      .eq('user_id', admin ? user.id : '')
       .order('created_at', { ascending: false }),
   ])
 
@@ -41,7 +43,7 @@ export default async function ProfilePage() {
     donations = data || []
   }
 
-  const fullName = profile?.full_name || user.user_metadata?.full_name || user.email || 'Your profile'
+  const fullName: string = profile?.full_name || user.user_metadata?.full_name || user.email || 'Your profile'
   const avatarInitials = fullName
     .split(' ')
     .filter(Boolean)
@@ -75,12 +77,14 @@ export default async function ProfilePage() {
                   Settings
                 </Button>
               </Link>
-              <Link href="/dashboard/create">
-                <Button size="sm" className="text-sm">
-                  <Heart className="mr-2 h-4 w-4" />
-                  New Campaign
-                </Button>
-              </Link>
+              {admin && (
+                <Link href="/dashboard/create">
+                  <Button size="sm" className="text-sm">
+                    <Heart className="mr-2 h-4 w-4" />
+                    New Campaign
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
 
@@ -147,11 +151,13 @@ export default async function ProfilePage() {
                   <CardTitle className="text-base font-semibold">Quick Actions</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2.5">
-                  <Link href="/dashboard/create" className="block">
-                    <Button className="w-full" size="sm">
-                      Create a campaign
-                    </Button>
-                  </Link>
+                  {admin && (
+                    <Link href="/dashboard/create" className="block">
+                      <Button className="w-full" size="sm">
+                        Create a campaign
+                      </Button>
+                    </Link>
+                  )}
                   <Link href="/dashboard/settings" className="block">
                     <Button variant="outline" className="w-full" size="sm">
                       Open settings
@@ -195,7 +201,9 @@ export default async function ProfilePage() {
                     </div>
                   ) : (
                     <div className="rounded-xl border border-dashed p-5 text-center text-xs text-muted-foreground">
-                      No campaigns yet. Create your first campaign to start tracking activity here.
+                      {admin
+                        ? 'No campaigns yet. Create your first campaign to start tracking activity here.'
+                        : 'Campaign management is reserved for admins.'}
                     </div>
                   )}
                 </CardContent>

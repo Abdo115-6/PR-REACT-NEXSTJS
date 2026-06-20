@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
 import { Loader2 } from 'lucide-react'
+import { isAdmin } from '@/lib/auth'
 
 interface CampaignEditFormProps {
   campaign: any
@@ -40,6 +41,11 @@ export function CampaignEditForm({ campaign }: CampaignEditFormProps) {
     setLoading(true)
 
     try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      if (userError || !user || !isAdmin(user)) {
+        throw new Error('Only admins can update campaigns.')
+      }
+
       const { error } = await supabase
         .from('campaigns')
         .update({

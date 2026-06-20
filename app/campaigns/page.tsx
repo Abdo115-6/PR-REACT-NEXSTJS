@@ -4,9 +4,14 @@ import { CampaignCard } from '@/components/campaign-card'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/server'
 import { ArrowRight, CircleDollarSign, HandHeart, Search } from 'lucide-react'
+import { isAdmin } from '@/lib/auth'
 
 export default async function CampaignsPage() {
   const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  const admin = isAdmin(user)
 
   const { data: campaigns } = await supabase
     .from('campaigns')
@@ -58,12 +63,14 @@ export default async function CampaignsPage() {
                 Browse active causes, compare progress, and support campaigns with transparent donation tracking.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Link href="/auth/sign-up">
-                  <Button className="bg-red-600 text-white hover:bg-red-700">
-                    Start a Campaign
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
+                {admin && (
+                  <Link href="/dashboard/create">
+                    <Button className="bg-red-600 text-white hover:bg-red-700">
+                      Start a Campaign
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </Link>
+                )}
                 <Link href="#campaign-list">
                   <Button variant="outline">
                     <Search className="mr-2 h-4 w-4" />
@@ -114,10 +121,16 @@ export default async function CampaignsPage() {
           {campaignsWithDonorCounts.length === 0 ? (
             <div className="rounded-xl border border-dashed bg-card p-10 text-center">
               <h3 className="text-lg font-semibold">No active campaigns yet</h3>
-              <p className="mt-2 text-muted-foreground">Create the first campaign and start collecting donations.</p>
-              <Link href="/auth/sign-up" className="mt-6 inline-block">
-                <Button>Create Campaign</Button>
-              </Link>
+              <p className="mt-2 text-muted-foreground">
+                {admin
+                  ? 'Create the first campaign and start collecting donations.'
+                  : 'New campaigns will appear here when an admin publishes them.'}
+              </p>
+              {admin && (
+                <Link href="/dashboard/create" className="mt-6 inline-block">
+                  <Button>Create Campaign</Button>
+                </Link>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">

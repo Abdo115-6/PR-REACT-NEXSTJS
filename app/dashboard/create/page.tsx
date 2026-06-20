@@ -3,6 +3,7 @@ import { CampaignForm } from '@/components/campaign-form'
 import { createClient } from '@/lib/supabase/server'
 import { isSupabaseConfigured } from '@/lib/supabase/config'
 import { redirect } from 'next/navigation'
+import { isAdmin } from '@/lib/auth'
 
 export default async function CreateCampaignPage() {
   if (!isSupabaseConfigured()) redirect('/auth/login')
@@ -16,6 +17,10 @@ export default async function CreateCampaignPage() {
 
   if (!user) {
     redirect('/auth/login')
+  }
+
+  if (!isAdmin(user)) {
+    redirect('/dashboard')
   }
 
   return (

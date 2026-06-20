@@ -4,12 +4,18 @@ import Navbar from '@/components/navbar'
 import { CampaignCard } from '@/components/campaign-card'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import { isAdmin } from '@/lib/auth'
 
 export default async function HomePage() {
   let campaignsWithDonorCounts: any[] = []
+  let admin = false
 
   if (isSupabaseConfigured()) {
     const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    admin = isAdmin(user)
 
     const { data: campaigns } = await supabase
       .from('campaigns')
@@ -55,13 +61,15 @@ export default async function HomePage() {
                 Support Causes That Matter
               </h1>
               <p className="text-xl text-red-50/90 max-w-2xl">
-                DonationFlow makes it easy to create campaigns, donate to causes you care about,
+                DonationFlow makes it easy to support causes you care about,
                 and make a real impact in your community.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/auth/sign-up">
-                  <Button size="lg" className="bg-red-600 text-white hover:bg-red-700">Start a Campaign</Button>
-                </Link>
+                {admin && (
+                  <Link href="/dashboard/create">
+                    <Button size="lg" className="bg-red-600 text-white hover:bg-red-700">Start a Campaign</Button>
+                  </Link>
+                )}
                 <Link href="/campaigns">
                   <Button size="lg" variant="outline" className="border-white/70 bg-white/10 text-white hover:bg-white hover:text-red-700">
                     Explore Campaigns
@@ -103,10 +111,12 @@ export default async function HomePage() {
 
             {campaignsWithDonorCounts.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-muted-foreground mb-6">No campaigns yet. Be the first to create one!</p>
-                <Link href="/auth/sign-up">
-                  <Button>Create Campaign</Button>
-                </Link>
+                <p className="text-muted-foreground mb-6">No active campaigns yet.</p>
+                {admin && (
+                  <Link href="/dashboard/create">
+                    <Button>Create Campaign</Button>
+                  </Link>
+                )}
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

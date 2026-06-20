@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
 import { Loader2, PlusCircle } from 'lucide-react'
+import { isAdmin } from '@/lib/auth'
 
 const categories = [
   { value: 'general', label: 'General' },
@@ -65,6 +66,15 @@ export function CampaignForm() {
           variant: 'destructive',
         })
         router.push('/auth/login')
+        return
+      }
+
+      if (!isAdmin(user)) {
+        toast({
+          title: 'Not allowed',
+          description: 'Only admins can create campaigns.',
+          variant: 'destructive',
+        })
         return
       }
 
