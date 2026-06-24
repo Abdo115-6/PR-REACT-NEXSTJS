@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
 import { Loader2, PlusCircle } from 'lucide-react'
 import { isAdmin } from '@/lib/auth'
+import { getErrorMessage } from '@/lib/errors'
 
 const categories = [
   { value: 'general', label: 'General' },
@@ -91,7 +92,7 @@ export function CampaignForm() {
       if (error) {
         console.error('Supabase insert error:', error)
         if (error.code === '23503') {
-          throw new Error('Database setup issue. Run supabase/fix-foreign-key.sql in Supabase SQL Editor.')
+          throw new Error('Database setup issue. Check the campaigns.user_id foreign key in Supabase.')
         }
         throw new Error(error.message)
       }
@@ -104,11 +105,11 @@ export function CampaignForm() {
       setTimeout(() => {
         window.location.href = '/dashboard'
       }, 500)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Campaign creation error:', error)
       toast({
         title: 'Error',
-        description: error.message || 'Failed to create campaign. Check the database schema.',
+        description: getErrorMessage(error, 'Failed to create campaign. Check the database schema.'),
         variant: 'destructive',
       })
     } finally {

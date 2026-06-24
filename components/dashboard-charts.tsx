@@ -31,16 +31,16 @@ export function DashboardCharts({ data }: { data: ChartData }) {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="trends" className="space-y-4">
-        <TabsList>
+        <TabsList className="border border-border/70 bg-muted/70 text-muted-foreground">
           <TabsTrigger value="trends">Donation Trends</TabsTrigger>
           <TabsTrigger value="campaigns">Campaign Performance</TabsTrigger>
           <TabsTrigger value="revenue">Revenue Breakdown</TabsTrigger>
         </TabsList>
 
         <TabsContent value="trends" className="space-y-4">
-          <Card>
+          <Card className="overflow-hidden">
             <CardHeader>
-              <CardTitle>Donations Over Time</CardTitle>
+              <CardTitle className="text-foreground">Donations Over Time</CardTitle>
             </CardHeader>
             <CardContent>
               {data.donationsOverTime.length === 0 ? (
@@ -63,9 +63,9 @@ export function DashboardCharts({ data }: { data: ChartData }) {
                       <Line
                         type="monotone"
                         dataKey="amount"
-                        stroke="#3b82f6"
+                        stroke="#991b1b"
                         strokeWidth={2}
-                        dot={{ fill: '#3b82f6' }}
+                        dot={{ fill: '#991b1b' }}
                       />
                     </LineChart>
                   </ResponsiveContainer>
@@ -76,9 +76,9 @@ export function DashboardCharts({ data }: { data: ChartData }) {
         </TabsContent>
 
         <TabsContent value="campaigns" className="space-y-4">
-          <Card>
+          <Card className="overflow-hidden">
             <CardHeader>
-              <CardTitle>Campaign Performance</CardTitle>
+              <CardTitle className="text-foreground">Campaign Performance</CardTitle>
             </CardHeader>
             <CardContent>
               {data.campaignPerformance.length === 0 ? (
@@ -91,8 +91,8 @@ export function DashboardCharts({ data }: { data: ChartData }) {
                       <XAxis dataKey="name" tick={false} />
                       <YAxis className="text-xs" />
                       <Tooltip />
-                      <Bar dataKey="raised" fill="#3b82f6" name="Raised" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="goal" fill="#e2e8f0" name="Goal" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="raised" fill="#991b1b" name="Raised" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="goal" fill="#fecaca" name="Goal" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -102,9 +102,9 @@ export function DashboardCharts({ data }: { data: ChartData }) {
         </TabsContent>
 
         <TabsContent value="revenue" className="space-y-4">
-          <Card>
+          <Card className="overflow-hidden">
             <CardHeader>
-              <CardTitle>Revenue Breakdown</CardTitle>
+              <CardTitle className="text-foreground">Revenue Breakdown</CardTitle>
             </CardHeader>
             <CardContent>
               {data.revenueBreakdown.length === 0 ? (

@@ -10,6 +10,11 @@ import { CampaignCard } from '@/components/campaign-card'
 import { RealtimeDonations } from '@/components/realtime-donations'
 import { BarChart3, DollarSign, Heart, Target, TrendingUp, Users } from 'lucide-react'
 
+function toNumber(value: string | number | null | undefined) {
+  const numericValue = Number(value)
+  return Number.isFinite(numericValue) ? numericValue : 0
+}
+
 export default async function DashboardPage() {
   if (!isSupabaseConfigured()) redirect('/auth/login')
 
@@ -18,17 +23,22 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const donationFilters = [`donor_id.eq.${user.id}`]
-  if (user.email) donationFilters.push(`donor_email.eq.${user.email}`)
-
-  const { data: userDonations } = await supabase
+  const { data: donationsByUser } = await supabase
     .from('donations')
     .select('*')
-    .or(donationFilters.join(','))
+    .eq('donor_id', user.id)
     .order('created_at', { ascending: true })
 
+  const { data: donationsByEmail } = user.email
+    ? await supabase
+        .from('donations')
+        .select('*')
+        .eq('donor_email', user.email)
+        .order('created_at', { ascending: true })
+    : { data: [] }
+
   const donations = Array.from(
-    new Map((userDonations || []).map((donation) => [donation.id, donation])).values()
+    new Map([...(donationsByUser || []), ...(donationsByEmail || [])].map((donation) => [donation.id, donation])).values()
   )
   const donatedCampaignIds = Array.from(new Set(donations.map((donation) => donation.campaign_id)))
 
@@ -67,8 +77,8 @@ export default async function DashboardPage() {
   })
 
   const totalDonations = donations.length
-  const totalRaised = donations.reduce((sum, donation) => sum + parseFloat(donation.amount || '0'), 0)
-  const totalPlatformFees = donations.reduce((sum, donation) => sum + parseFloat(donation.platform_fee || '0'), 0)
+  const totalRaised = donations.reduce((sum, donation) => sum + toNumber(donation.amount), 0)
+  const totalPlatformFees = donations.reduce((sum, donation) => sum + toNumber(donation.platform_fee), 0)
   const donationsOverTimeMap = new Map<string, { amount: number; count: number }>()
 
   donations.forEach((donation) => {
@@ -76,15 +86,15 @@ export default async function DashboardPage() {
     if (!date) return
 
     const existing = donationsOverTimeMap.get(date) || { amount: 0, count: 0 }
-    existing.amount += parseFloat(donation.amount || '0')
+    existing.amount += toNumber(donation.amount)
     existing.count += 1
     donationsOverTimeMap.set(date, existing)
   })
 
   const campaignPerformance = activeCampaigns.map((campaign) => ({
     name: campaign.title,
-    raised: parseFloat(campaign.current_amount || '0'),
-    goal: parseFloat(campaign.goal_amount || '0'),
+    raised: toNumber(campaign.current_amount),
+    goal: toNumber(campaign.goal_amount),
     donations: campaignDonationCounts.get(campaign.id) || 0,
   }))
 
@@ -181,8 +191,8 @@ export default async function DashboardPage() {
                     id={campaign.id}
                     title={campaign.title}
                     description={campaign.description || ''}
-                    goalAmount={parseFloat(campaign.goal_amount || '0')}
-                    currentAmount={parseFloat(campaign.current_amount || '0')}
+                    goalAmount={toNumber(campaign.goal_amount)}
+                    currentAmount={toNumber(campaign.current_amount)}
                     category={campaign.category || 'General'}
                     donorCount={campaignDonationCounts.get(campaign.id) || 0}
                   />

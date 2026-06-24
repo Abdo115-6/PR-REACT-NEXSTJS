@@ -1,12 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
 import { isSupabaseConfigured } from '@/lib/supabase/config'
 import Navbar from '@/components/navbar'
+import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { redirect } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
 import { Heart, TrendingUp, Users, Wallet } from 'lucide-react'
+import { DonationActions } from '@/components/donation-actions'
 
 interface Donation {
   id: string
@@ -23,6 +26,16 @@ interface Donation {
   campaign_title?: string
 }
 
+function toNumber(value: string | number | null | undefined) {
+  const numericValue = Number(value)
+  return Number.isFinite(numericValue) ? numericValue : 0
+}
+
+function formatRelativeDate(value: string) {
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : formatDistanceToNow(date, { addSuffix: true })
+}
+
 export default async function DonationsPage() {
   if (!isSupabaseConfigured()) redirect('/auth/login')
 
@@ -31,19 +44,22 @@ export default async function DonationsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const filters = [`donor_id.eq.${user.id}`]
-  if (user.email) {
-    filters.push(`donor_email.eq.${user.email}`)
-  }
-
-  const { data: donationsByAccount } = await supabase
+  const { data: donationsByUser } = await supabase
     .from('donations')
     .select('*')
-    .or(filters.join(','))
+    .eq('donor_id', user.id)
     .order('created_at', { ascending: false })
 
+  const { data: donationsByEmail } = user.email
+    ? await supabase
+        .from('donations')
+        .select('*')
+        .eq('donor_email', user.email)
+        .order('created_at', { ascending: false })
+    : { data: [] }
+
   const uniqueDonations = Array.from(
-    new Map((donationsByAccount || []).map((donation) => [donation.id, donation])).values()
+    new Map([...(donationsByUser || []), ...(donationsByEmail || [])].map((donation) => [donation.id, donation])).values()
   )
   const campaignIds = Array.from(new Set(uniqueDonations.map((donation) => donation.campaign_id)))
 
@@ -62,8 +78,8 @@ export default async function DonationsPage() {
   }))
 
   const totalDonations = donationsWithCampaign.length
-  const totalDonated = donationsWithCampaign.reduce((sum, d) => sum + parseFloat(d.amount || '0'), 0)
-  const totalFees = donationsWithCampaign.reduce((sum, d) => sum + parseFloat(d.platform_fee || '0'), 0)
+  const totalDonated = donationsWithCampaign.reduce((sum, d) => sum + toNumber(d.amount), 0)
+  const totalFees = donationsWithCampaign.reduce((sum, d) => sum + toNumber(d.platform_fee), 0)
   const supportedCampaigns = new Set(donationsWithCampaign.map(d => d.campaign_id)).size
 
   const stats = [
@@ -79,9 +95,18 @@ export default async function DonationsPage() {
       <main className="min-h-screen bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="mb-8 rounded-xl border bg-card p-6 shadow-sm">
-            <p className="text-sm font-medium text-red-700 dark:text-red-300">My giving</p>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight md:text-4xl">My Donations</h1>
-            <p className="mt-2 max-w-2xl text-muted-foreground">Review your donation history, supported campaigns, messages, and platform fees.</p>
+            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div>
+                <p className="text-sm font-medium text-red-700 dark:text-red-300">My giving</p>
+                <h1 className="mt-2 text-3xl font-bold tracking-tight md:text-4xl">My Donations</h1>
+                <p className="mt-2 max-w-2xl text-muted-foreground">
+                  Review your donation history, edit public details, and remove donations you no longer want to keep.
+                </p>
+              </div>
+              <Button asChild className="bg-red-600 text-white hover:bg-red-700">
+                <Link href="/campaigns">Donate again</Link>
+              </Button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
@@ -112,7 +137,12 @@ export default async function DonationsPage() {
             </CardHeader>
             <CardContent className="p-0">
               {donationsWithCampaign.length === 0 ? (
-                <p className="text-muted-foreground text-center py-12">You have not made any donations yet.</p>
+                <div className="space-y-4 px-6 py-12 text-center">
+                  <p className="text-muted-foreground">You have not made any donations yet.</p>
+                  <Button asChild variant="outline">
+                    <Link href="/campaigns">Browse campaigns</Link>
+                  </Button>
+                </div>
               ) : (
                 <Table>
                   <TableHeader>
@@ -123,6 +153,7 @@ export default async function DonationsPage() {
                       <TableHead className="text-right">Fee</TableHead>
                       <TableHead>Message</TableHead>
                       <TableHead>Date</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -136,15 +167,22 @@ export default async function DonationsPage() {
                             <Badge variant="outline">{donation.donor_name || user.email || 'Public'}</Badge>
                           )}
                         </TableCell>
-                        <TableCell className="text-right font-semibold text-green-700 dark:text-green-300">MAD {parseFloat(donation.amount).toLocaleString()}</TableCell>
+                        <TableCell className="text-right font-semibold text-green-700 dark:text-green-300">MAD {toNumber(donation.amount).toLocaleString()}</TableCell>
                         <TableCell className="text-right text-sm text-amber-700 dark:text-amber-300">
-                          MAD {parseFloat(donation.platform_fee || '0').toLocaleString()}
+                          MAD {toNumber(donation.platform_fee).toLocaleString()}
                         </TableCell>
                         <TableCell className="max-w-[200px] truncate text-muted-foreground">
                           {donation.message ? `"${donation.message}"` : '-'}
                         </TableCell>
                         <TableCell className="text-muted-foreground text-sm">
-                          {formatDistanceToNow(new Date(donation.created_at), { addSuffix: true })}
+                          {formatRelativeDate(donation.created_at)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DonationActions
+                            donationId={donation.id}
+                            amount={toNumber(donation.amount)}
+                            editHref={`/dashboard/donations/${donation.id}/edit`}
+                          />
                         </TableCell>
                       </TableRow>
                     ))}

@@ -14,6 +14,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { OAuthProviders } from '@/components/oauth-providers'
+import { isAdminEmail } from '@/lib/auth'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -49,7 +50,8 @@ export default function Page() {
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const adminSignup = isAdminEmail(email)
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -58,7 +60,13 @@ export default function Page() {
             `${window.location.origin}/auth/callback`,
         },
       })
+
       if (error) throw error
+
+      if (adminSignup && data.session) {
+        router.push('/dashboard')
+        return
+      }
       router.push('/auth/sign-up-success')
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred')
@@ -74,7 +82,9 @@ export default function Page() {
           <Card>
             <CardHeader>
               <CardTitle className="text-2xl">Sign up</CardTitle>
-              <CardDescription>Create a new account</CardDescription>
+              <CardDescription>
+                Create a new account. Allowlisted admin emails are treated as admins after sign-in.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSignUp}>

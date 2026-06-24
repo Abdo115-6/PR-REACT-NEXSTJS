@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/server'
 import { ArrowRight, CircleDollarSign, HandHeart, Search } from 'lucide-react'
 import { isAdmin } from '@/lib/auth'
+import type { CampaignRecord, CampaignWithDonorCount } from '@/lib/records'
 
 export default async function CampaignsPage() {
   const supabase = await createClient()
@@ -19,7 +20,7 @@ export default async function CampaignsPage() {
     .eq('status', 'active')
     .order('created_at', { ascending: false })
 
-  let campaignsWithDonorCounts: any[] = []
+  let campaignsWithDonorCounts: CampaignWithDonorCount[] = []
 
   if (campaigns && campaigns.length > 0) {
     const donationCounts = await Promise.all(
@@ -32,18 +33,18 @@ export default async function CampaignsPage() {
       })
     )
 
-    campaignsWithDonorCounts = campaigns.map((campaign) => {
+    campaignsWithDonorCounts = (campaigns as CampaignRecord[]).map((campaign) => {
       const donorCount = donationCounts.find((dc) => dc.campaignId === campaign.id)?.count || 0
       return { ...campaign, donorCount }
     })
   }
 
   const totalRaised = campaignsWithDonorCounts.reduce(
-    (sum, campaign) => sum + parseFloat(campaign.current_amount || '0'),
+    (sum, campaign) => sum + Number(campaign.current_amount || 0),
     0
   )
   const totalGoal = campaignsWithDonorCounts.reduce(
-    (sum, campaign) => sum + parseFloat(campaign.goal_amount || '0'),
+    (sum, campaign) => sum + Number(campaign.goal_amount || 0),
     0
   )
   const totalDonors = campaignsWithDonorCounts.reduce((sum, campaign) => sum + campaign.donorCount, 0)
@@ -140,8 +141,8 @@ export default async function CampaignsPage() {
                   id={campaign.id}
                   title={campaign.title}
                   description={campaign.description || ''}
-                  goalAmount={parseFloat(campaign.goal_amount)}
-                  currentAmount={parseFloat(campaign.current_amount)}
+                  goalAmount={Number(campaign.goal_amount)}
+                  currentAmount={Number(campaign.current_amount)}
                   category={campaign.category || 'General'}
                   donorCount={campaign.donorCount}
                 />

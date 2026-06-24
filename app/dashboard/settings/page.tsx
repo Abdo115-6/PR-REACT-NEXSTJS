@@ -9,9 +9,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
+import { RealtimeDonations } from '@/components/realtime-donations'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
 import { DollarSign, Percent, ShieldCheck } from 'lucide-react'
+import { getErrorMessage } from '@/lib/errors'
+import { formatDistanceToNow } from 'date-fns'
+import { AccountRealtime } from '@/components/account-realtime'
 
 const DEFAULT_FEE_PERCENTAGE = 5
 
@@ -20,34 +24,65 @@ export default function SettingsPage() {
   const { toast } = useToast()
   const router = useRouter()
   const [feePercentage, setFeePercentage] = useState(DEFAULT_FEE_PERCENTAGE)
+  const [updatedAt, setUpdatedAt] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [refreshNonce, setRefreshNonce] = useState(0)
 
   useEffect(() => {
+    let active = true
+
     const loadSettings = async () => {
       if (!supabaseConfigured) {
-        router.push('/auth/login')
+        if (active) {
+          router.push('/auth/login')
+        }
         return
       }
 
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
       if (!user) {
-        router.push('/auth/login')
+        if (active) {
+          router.push('/auth/login')
+        }
         return
       }
 
       const { data: settings } = await supabase
         .from('platform_settings')
-        .select('fee_percentage')
-        .single()
+        .select('fee_percentage, updated_at')
+        .eq('id', 1)
+        .maybeSingle()
+
+      if (!active) {
+        return
+      }
 
       if (settings) {
         setFeePercentage(settings.fee_percentage)
+        setUpdatedAt(settings.updated_at ?? null)
       }
       setLoading(false)
     }
-    loadSettings()
+
+    const refreshOnFocus = () => {
+      if (document.visibilityState === 'visible') {
+        void loadSettings()
+      }
+    }
+
+    void loadSettings()
+    window.addEventListener('focus', refreshOnFocus)
+    document.addEventListener('visibilitychange', refreshOnFocus)
+
+    return () => {
+      active = false
+      window.removeEventListener('focus', refreshOnFocus)
+      document.removeEventListener('visibilitychange', refreshOnFocus)
+    }
   }, [router, supabaseConfigured])
 
   const handleSave = async () => {
@@ -56,20 +91,23 @@ export default function SettingsPage() {
     const supabase = createClient()
     setSaving(true)
     try {
+      const nextUpdatedAt = new Date().toISOString()
       const { error } = await supabase
         .from('platform_settings')
-        .upsert({ id: 1, fee_percentage: feePercentage }, { onConflict: 'id' })
+        .upsert({ id: 1, fee_percentage: feePercentage, updated_at: nextUpdatedAt }, { onConflict: 'id' })
 
       if (error) throw error
+
+      setUpdatedAt(nextUpdatedAt)
 
       toast({
         title: 'Settings saved',
         description: `Platform fee set to ${feePercentage}%`,
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to save settings',
+        description: getErrorMessage(error, 'Failed to save settings'),
         variant: 'destructive',
       })
     } finally {
@@ -93,6 +131,17 @@ export default function SettingsPage() {
   return (
     <>
       <Navbar />
+      <RealtimeDonations
+        showToast={false}
+        refreshOnChange
+        onChange={() => setRefreshNonce((value) => value + 1)}
+      />
+      <AccountRealtime
+        onSettingsChange={({ feePercentage: nextFeePercentage, updatedAt: nextSettingsUpdatedAt }) => {
+          setFeePercentage(nextFeePercentage)
+          setUpdatedAt(nextSettingsUpdatedAt)
+        }}
+      />
       <main className="min-h-screen bg-background">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="mb-8">
@@ -101,7 +150,6 @@ export default function SettingsPage() {
           </div>
 
           <div className="space-y-6">
-            {/* Platform Fee Settings */}
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-2">
@@ -131,6 +179,11 @@ export default function SettingsPage() {
                   <p className="text-sm text-muted-foreground">
                     Recommended: 5%. For example, a MAD 100 donation means MAD {(100 * feePercentage / 100).toFixed(2)} goes to the platform.
                   </p>
+                  {updatedAt && (
+                    <p className="text-xs text-muted-foreground">
+                      Last updated {formatDistanceToNow(new Date(updatedAt), { addSuffix: true })}
+                    </p>
+                  )}
                 </div>
                 <Button onClick={handleSave} disabled={saving}>
                   {saving ? 'Saving...' : 'Save Settings'}
@@ -138,7 +191,6 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
 
-            {/* Revenue Summary */}
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-2">
@@ -150,11 +202,10 @@ export default function SettingsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <RevenueSummary />
+                <RevenueSummary key={refreshNonce} refreshNonce={refreshNonce} />
               </CardContent>
             </Card>
 
-            {/* Platform Info */}
             <Card>
               <CardHeader>
                 <CardTitle>About Platform Fees</CardTitle>
@@ -179,22 +230,33 @@ export default function SettingsPage() {
   )
 }
 
-function RevenueSummary() {
+function RevenueSummary({ refreshNonce }: { refreshNonce: number }) {
   const supabaseConfigured = isSupabaseConfigured()
   const [totalFees, setTotalFees] = useState(0)
   const [totalDonations, setTotalDonations] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let active = true
+
     const loadRevenue = async () => {
       if (!supabaseConfigured) {
-        setLoading(false)
+        if (active) {
+          setLoading(false)
+        }
         return
       }
 
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) {
+        if (active) {
+          setLoading(false)
+        }
+        return
+      }
 
       const { data: campaigns } = await supabase
         .from('campaigns')
@@ -202,23 +264,32 @@ function RevenueSummary() {
         .eq('user_id', user.id)
 
       if (!campaigns || campaigns.length === 0) {
-        setLoading(false)
+        if (active) {
+          setTotalFees(0)
+          setTotalDonations(0)
+          setLoading(false)
+        }
         return
       }
 
       const { data: donations } = await supabase
         .from('donations')
         .select('amount, platform_fee')
-        .in('campaign_id', campaigns.map(c => c.id))
+        .in('campaign_id', campaigns.map((campaign) => campaign.id))
 
-      if (donations) {
-        setTotalFees(donations.reduce((sum, d) => sum + parseFloat(d.platform_fee || '0'), 0))
-        setTotalDonations(donations.reduce((sum, d) => sum + parseFloat(d.amount || '0'), 0))
+      if (donations && active) {
+        setTotalFees(donations.reduce((sum, donation) => sum + parseFloat(donation.platform_fee || '0'), 0))
+        setTotalDonations(donations.reduce((sum, donation) => sum + parseFloat(donation.amount || '0'), 0))
       }
-      setLoading(false)
+      if (active) {
+        setLoading(false)
+      }
     }
     loadRevenue()
-  }, [supabaseConfigured])
+    return () => {
+      active = false
+    }
+  }, [refreshNonce, supabaseConfigured])
 
   if (loading) return <p className="text-muted-foreground">Loading revenue data...</p>
 

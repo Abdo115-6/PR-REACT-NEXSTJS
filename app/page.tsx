@@ -5,9 +5,10 @@ import { CampaignCard } from '@/components/campaign-card'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { isAdmin } from '@/lib/auth'
+import type { CampaignRecord, CampaignWithDonorCount } from '@/lib/records'
 
 export default async function HomePage() {
-  let campaignsWithDonorCounts: any[] = []
+  let campaignsWithDonorCounts: CampaignWithDonorCount[] = []
   let admin = false
 
   if (isSupabaseConfigured()) {
@@ -36,7 +37,7 @@ export default async function HomePage() {
         })
       )
 
-      campaignsWithDonorCounts = campaigns.map((campaign) => {
+      campaignsWithDonorCounts = (campaigns as CampaignRecord[]).map((campaign) => {
         const donorCount = donationCounts.find((dc) => dc.campaignId === campaign.id)?.count || 0
         return { ...campaign, donorCount }
       })
@@ -46,7 +47,7 @@ export default async function HomePage() {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-red-50/40 dark:bg-black">
+      <main className="min-h-screen bg-red-50/40 dark:bg-background">
         {/* Hero Section */}
         <section className="relative min-h-[560px] overflow-hidden py-16 md:py-24">
           <div
@@ -54,7 +55,10 @@ export default async function HomePage() {
             style={{ backgroundImage: "url('/donation.jpg')" }}
             aria-hidden="true"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-red-950/75 via-red-900/55 to-red-50 dark:to-black" aria-hidden="true" />
+          <div
+            className="absolute inset-0 bg-gradient-to-b from-red-950/75 via-red-900/55 to-red-50 dark:from-red-950/88 dark:via-red-900/70 dark:to-background"
+            aria-hidden="true"
+          />
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl text-white space-y-6">
               <h1 className="text-4xl md:text-5xl font-bold">
@@ -81,12 +85,12 @@ export default async function HomePage() {
         </section>
 
         {/* Stats Section */}
-        <section className="bg-white py-8 dark:bg-black">
+        <section className="bg-white py-8 dark:bg-card">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
               <div>
                 <p className="text-3xl font-bold text-red-700 dark:text-red-200">
-                  MAD {campaignsWithDonorCounts.reduce((sum, c) => sum + (c.current_amount || 0), 0).toLocaleString()}
+                  MAD {campaignsWithDonorCounts.reduce((sum, c) => sum + Number(c.current_amount || 0), 0).toLocaleString()}
                 </p>
                 <p className="text-muted-foreground mt-2">Total Raised</p>
               </div>
@@ -126,8 +130,8 @@ export default async function HomePage() {
                     id={campaign.id}
                     title={campaign.title}
                     description={campaign.description || ''}
-                    goalAmount={parseFloat(campaign.goal_amount)}
-                    currentAmount={parseFloat(campaign.current_amount)}
+                    goalAmount={Number(campaign.goal_amount)}
+                    currentAmount={Number(campaign.current_amount)}
                     category={campaign.category || 'General'}
                     donorCount={campaign.donorCount}
                   />

@@ -11,6 +11,12 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { RealtimeDonations } from '@/components/realtime-donations'
 import { ArrowLeft, CalendarDays, CircleDollarSign, Users } from 'lucide-react'
+import type { DonationRecord } from '@/lib/records'
+
+function toNumber(value: string | number | null | undefined) {
+  const numericValue = Number(value)
+  return Number.isFinite(numericValue) ? numericValue : 0
+}
 
 export default async function CampaignDetailPage({
   params,
@@ -39,17 +45,16 @@ export default async function CampaignDetailPage({
   let creatorName = ''
   let creatorInitial = '?'
 
-  try {
-    const { data: creatorProfile } = await supabase
-      .from('profiles')
-      .select('full_name')
-      .eq('id', campaign.user_id)
-      .single()
-    if (creatorProfile) {
-      creatorName = creatorProfile.full_name || ''
-      creatorInitial = creatorName?.[0] || ''
-    }
-  } catch {
+  const { data: creatorProfile } = await supabase
+    .from('profiles')
+    .select('full_name')
+    .eq('id', campaign.user_id)
+    .maybeSingle()
+
+  if (creatorProfile) {
+    creatorName = creatorProfile.full_name || ''
+    creatorInitial = creatorName?.[0]?.toUpperCase() || '?'
+  } else {
     creatorInitial = campaign.user_id?.[0]?.toUpperCase() || '?'
   }
 
@@ -57,7 +62,7 @@ export default async function CampaignDetailPage({
     string,
     { donor_name: string | null; total_amount: number; donation_count: number; anonymous: boolean }
   >()
-  donations?.forEach((d: any) => {
+  ;(donations as DonationRecord[] | null)?.forEach((d) => {
     const key = d.anonymous ? 'anonymous' : d.donor_email || d.donor_name || 'unknown'
     const existing =
       donorMap.get(key) || {
@@ -66,13 +71,15 @@ export default async function CampaignDetailPage({
         donation_count: 0,
         anonymous: d.anonymous,
       }
-    existing.total_amount += parseFloat(d.amount)
+    existing.total_amount += toNumber(d.amount)
     existing.donation_count += 1
     donorMap.set(key, existing)
   })
   const topDonors = Array.from(donorMap.values()).sort((a, b) => b.total_amount - a.total_amount)
 
-  const progress = (parseFloat(campaign.current_amount) / parseFloat(campaign.goal_amount)) * 100
+  const currentAmount = toNumber(campaign.current_amount)
+  const goalAmount = toNumber(campaign.goal_amount)
+  const progress = goalAmount > 0 ? (currentAmount / goalAmount) * 100 : 0
   const fundingPct = Math.min(progress, 100)
 
   return (
@@ -125,7 +132,7 @@ export default async function CampaignDetailPage({
                           Raised
                         </p>
                         <p className="mt-2 text-lg font-semibold">
-                          MAD {parseFloat(campaign.current_amount).toLocaleString()}
+                          MAD {currentAmount.toLocaleString()}
                         </p>
                       </div>
                       <div className="rounded-2xl border border-border/70 bg-muted/25 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]">
@@ -134,7 +141,7 @@ export default async function CampaignDetailPage({
                           Goal
                         </p>
                         <p className="mt-2 text-lg font-semibold">
-                          MAD {parseFloat(campaign.goal_amount).toLocaleString()}
+                          MAD {goalAmount.toLocaleString()}
                         </p>
                       </div>
                       <div className="rounded-2xl border border-border/70 bg-muted/25 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]">
@@ -157,6 +164,7 @@ export default async function CampaignDetailPage({
                   <div className="relative min-h-[280px] lg:min-h-full">
                     {campaign.image_url ? (
                       <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={campaign.image_url}
                           alt={campaign.title}
@@ -215,7 +223,7 @@ export default async function CampaignDetailPage({
                       <DonationCard
                         key={donation.id}
                         donorName={donation.donor_name}
-                        amount={parseFloat(donation.amount)}
+                        amount={toNumber(donation.amount)}
                         message={donation.message}
                         anonymous={donation.anonymous}
                         createdAt={donation.created_at}
@@ -240,10 +248,10 @@ export default async function CampaignDetailPage({
                     <ProgressBar value={fundingPct} />
                     <div className="mt-3 flex justify-between text-[11px]">
                       <span className="font-semibold text-green-700 dark:text-green-300">
-                        MAD {parseFloat(campaign.current_amount).toLocaleString()}
+                        MAD {currentAmount.toLocaleString()}
                       </span>
                       <span className="text-muted-foreground">
-                        MAD {parseFloat(campaign.goal_amount).toLocaleString()}
+                        MAD {goalAmount.toLocaleString()}
                       </span>
                     </div>
                     <p className="mt-2 text-[10px] text-muted-foreground">

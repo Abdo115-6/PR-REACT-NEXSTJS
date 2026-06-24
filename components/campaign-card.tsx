@@ -28,9 +28,9 @@ export function CampaignCard({
 
   return (
     <Link href={`/campaigns/${id}`} className="block h-full">
-      <Card className="group h-full overflow-hidden border-border/70 bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:border-red-200 hover:shadow-md dark:hover:border-red-900">
+      <Card className="group h-full overflow-hidden border-border/70 bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:border-red-200 hover:shadow-md dark:hover:border-red-700">
         <div className="flex items-center justify-between gap-3 border-b bg-muted/20 px-5 py-4">
-          <div className="rounded-full bg-white px-3 py-1 text-xs font-medium text-red-700 shadow-sm dark:bg-black/80 dark:text-red-200">
+          <div className="rounded-full bg-white px-3 py-1 text-xs font-medium text-red-700 shadow-sm dark:bg-muted dark:text-red-100">
             {category}
           </div>
           <div className="rounded-full border bg-background px-3 py-1 text-xs font-medium text-muted-foreground">

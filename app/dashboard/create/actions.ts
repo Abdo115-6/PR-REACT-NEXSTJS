@@ -1,19 +1,12 @@
 "use server"
 
 import { createClient } from '@/lib/supabase/server'
-import { isSupabaseConfigured } from '@/lib/supabase/config'
-import { isAdmin } from '@/lib/auth'
 
 export async function createCampaign(formData: FormData) {
-  if (!isSupabaseConfigured()) {
-    return { ok: false as const, message: 'Supabase is not configured.' }
-  }
-
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { ok: false as const, message: 'Not authenticated' }
-  if (!isAdmin(user)) return { ok: false as const, message: 'Only admins can create campaigns.' }
 
   const title = String(formData.get('title') ?? '').trim()
   const description = String(formData.get('description') ?? '').trim()
